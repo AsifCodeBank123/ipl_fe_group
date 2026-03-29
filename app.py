@@ -136,6 +136,21 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ----------------------------------------
+# PROGRESS BAR
+# ----------------------------------------
+
+progress = selected_day / TOTAL_MATCHES
+percent = int(progress * 100)
+
+st.markdown(f"""
+<div style="font-size:0.9rem;color:#94a3b8;margin-bottom:4px;margin-top:10px">
+📊 Season Progress: <b>{selected_day}</b> / {TOTAL_MATCHES} matches ({percent}%)
+</div>
+""", unsafe_allow_html=True)
+
+st.progress(progress)
+
+# ----------------------------------------
 # TOP CAPTAIN & VC CARDS
 # ----------------------------------------
 cap_records = []
@@ -269,6 +284,30 @@ def get_c_vc_points(owner, role="captain"):
             player_points_list.append(value)
 
     return "—" if not player_points_list else f"({', '.join(map(str, player_points_list))})"
+
+# ----------------------------------------
+# PLAYER IMPACT SEGMENTATION
+# ----------------------------------------
+
+player_totals = (
+    scored_df
+    .groupby(["owner_name", "player_name"])["player_points"]
+    .sum()
+    .reset_index()
+)
+
+# Categorize
+player_totals["category"] = player_totals["player_points"].apply(
+    lambda x: "Dead (<10 points)" if x < 10 else "Active (≥10 points)"
+)
+
+# Count per owner per category
+stack_df = (
+    player_totals
+    .groupby(["owner_name", "category"])["player_name"]
+    .count()
+    .reset_index(name="count")
+)
 
 # ==================================================
 # TAB 1
@@ -508,6 +547,29 @@ with tab3:
     fig2 = px.pie(franchise_df, names="franchise", values="player_points")
     fig2.update_layout(template="plotly_dark")
     col2.plotly_chart(fig2, use_container_width=True)
+
+    fig = px.bar(
+        stack_df,
+        x="owner_name",
+        y="count",
+        color="category",
+        text_auto=True,
+        barmode="stack",
+        color_discrete_map={
+            "Dead (<10 points)": "#ef4444",     # red
+            "Active (≥10 points)": "#22c55e"    # green
+        }
+    )
+
+    fig.update_layout(
+        template="plotly_dark",
+        title="📊 Squad Quality (Dead vs Active Players)",
+        xaxis_title="Owner",
+        yaxis_title="No. of Players",
+        legend_title=""
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
 
 # ==================================================
 # TAB 4

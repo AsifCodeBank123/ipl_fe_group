@@ -1,0 +1,3 @@
+INITIAL_PURSE = 10000   # change if needed
+MINI_AUCTION_MIN_PRICE = 100
+PURSE_TO_POINTS_RATIO = 0.5   # 50 points per $100

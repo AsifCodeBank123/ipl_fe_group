@@ -136,9 +136,65 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ----------------------------------------
+# TOP CAPTAIN & VC CARDS
+# ----------------------------------------
+cap_records = []
+vc_records = []
+
+for _, row in cap_df.iterrows():
+    owner = row["owner_name"]
+    start_day = row["from_day"]
+    captain = row["captain"]
+    vc = row["vice_captain"]
+
+    for d in range(start_day, selected_day + 1):
+        day_col = f"day{d}"
+        if day_col not in df.columns:
+            continue
+
+        # Captain points
+        c_row = df[
+            (df["owner_name"] == owner) &
+            (df["player_name"] == captain)
+        ]
+        if not c_row.empty:
+            pts = pd.to_numeric(c_row.iloc[0].get(day_col, 0), errors="coerce")
+            pts = 0 if pd.isna(pts) else pts
+            cap_records.append((captain, pts * 2))
+
+        # VC points
+        vc_row = df[
+            (df["owner_name"] == owner) &
+            (df["player_name"] == vc)
+        ]
+        if not vc_row.empty:
+            pts = pd.to_numeric(vc_row.iloc[0].get(day_col, 0), errors="coerce")
+            pts = 0 if pd.isna(pts) else pts
+            vc_records.append((vc, pts * 1.5))
+
+
+# Aggregate
+top_captain = (
+    pd.DataFrame(cap_records, columns=["player", "points"])
+    .groupby("player")["points"]
+    .sum()
+    .sort_values(ascending=False)
+)
+
+top_vc = (
+    pd.DataFrame(vc_records, columns=["player", "points"])
+    .groupby("player")["points"]
+    .sum()
+    .sort_values(ascending=False)
+)
+
+top_captain_name = top_captain.index[0] if not top_captain.empty else "—"
+top_vc_name = top_vc.index[0] if not top_vc.empty else "—"
+
+# ----------------------------------------
 # KPI (NEW)
 # ----------------------------------------
-k1, k2, k3 = st.columns(3)
+k1, k2, k3, k4 = st.columns(4)
 
 top_player = (
     scored_df.groupby("player_name")["player_points"]
@@ -153,9 +209,15 @@ k2.markdown(f"<div class='card highlight'><h4>Leader</h4><h2>{team_df.iloc[0]['O
 
 k3.markdown(f"""
 <div class='card'>
-<h4>Top Player</h4>
-<h2>{top_player['player_name']}</h2>
-<span>{round(top_player['player_points'],1)} pts</span>
+<h4>Top Captain</h4>
+<h2>🧢 {top_captain_name}</h2>
+</div>
+""", unsafe_allow_html=True)
+
+k4.markdown(f"""
+<div class='card'>
+<h4>Top VC</h4>
+<h2>🎖️ {top_vc_name}</h2>
 </div>
 """, unsafe_allow_html=True)
 
@@ -165,6 +227,48 @@ st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 # TABS
 # ----------------------------------------
 tab1, tab2, tab3, tab4 = st.tabs(["🏆 Rankings","👥 Players","📊 Insights"," 🎯 Squad Composition"])
+
+#helper to compute captain and vc points for captain strategy table
+
+def get_c_vc_points(owner, role="captain"):
+    
+    oc = cap_df[cap_df["owner_name"] == owner].sort_values("from_day")
+    
+    if oc.empty:
+        return "—"
+    
+    player_points_list = []
+
+    for d in range(1, selected_day + 1):
+        day_col = f"day{d}"
+        if day_col not in df.columns:
+            continue
+
+        cap_row = oc[oc["from_day"] <= d]
+        if cap_row.empty:
+            continue
+
+        latest = cap_row.iloc[-1]
+        player = latest["captain"] if role == "captain" else latest["vice_captain"]
+
+        player_row = df[
+            (df["owner_name"] == owner) &
+            (df["player_name"] == player)
+        ]
+
+        if player_row.empty:
+            continue
+
+        points = pd.to_numeric(player_row.iloc[0].get(day_col, 0), errors="coerce")
+        points = 0 if pd.isna(points) else points
+
+        multiplier = 2.0 if role == "captain" else 1.5
+        value = round(points * multiplier, 1)
+
+        if value != 0:
+            player_points_list.append(value)
+
+    return "—" if not player_points_list else f"({', '.join(map(str, player_points_list))})"
 
 # ==================================================
 # TAB 1
@@ -228,7 +332,9 @@ with tab1:
         rows.append({
             "Owner":owner,
             "Captain":c,
+            "Cap Points": get_c_vc_points(owner, "captain"),
             "Vice Captain":vc,
+            "VC Points": get_c_vc_points(owner, "vc"),
             "Changes":len(oc)-1
         })
 
@@ -408,9 +514,16 @@ with tab3:
 # ==================================================
 with tab4:
 
-    squad_df = df.groupby(["owner_name","franchise"])["player_name"].count().reset_index()
+    squad_df = df.groupby(["owner_name", "franchise"]).size().reset_index(name="player_count")
 
-    fig = px.bar(squad_df, x="owner_name", y="player_name", color="franchise", text_auto=True)
+    fig = px.bar(
+        squad_df,
+        x="owner_name",
+        y="player_count",
+        color="franchise",
+        text_auto=True
+    )
+
     fig.update_layout(barmode="stack", template="plotly_dark")
 
     st.plotly_chart(fig, use_container_width=True)

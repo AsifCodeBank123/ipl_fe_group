@@ -9,7 +9,7 @@ from utils.helpers import build_watchlist
 # ----------------------------------------
 # CONFIG
 # ----------------------------------------
-st.set_page_config(layout="wide", page_title="IPL Dashboard-Core Group")
+st.set_page_config(layout="wide", page_title="IPL Dashboard-FE Group")
 TOTAL_MATCHES = 74
 
 # ----------------------------------------
@@ -129,7 +129,7 @@ team_df["1st Rank"] = first_delta
 st.markdown(f"""
 <div class="header">
     <div>
-        <div class="title">🏏 IPL Fantasy Dashboard - Core Group</div>
+        <div class="title">🏏 IPL Fantasy Dashboard - FE Group</div>
         <div class="subtitle">Live standings till Day {selected_day}</div>
     </div>
 </div>

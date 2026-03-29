@@ -45,15 +45,18 @@ body {
 
 .card {
     background: linear-gradient(145deg, #0f172a, #020617);
-    padding: 24px; /* Increased padding for breathing room */
+    
     border-radius: 16px;
     border: 1px solid var(--card-border);
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 2px; /* 👈 reduce vertical spacing */
     position: relative;
     overflow: hidden;
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+    max-width: 220px;   /* 👈 control width */
+    margin: 0 auto;     /* 👈 center inside column */
+    padding: 16px 18px;  /* 👈 slightly reduced */
 }
 
 /* Glass shine effect on hover */
@@ -81,15 +84,17 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-muted);
-    margin: 0;
+    margin: -4px 0;
+    line-height: 1.1; /* tighter */
 }
 
 .card h2 {
-    font-size: 1.75rem;
+    font-size: 1.25rem;
     color: var(--accent-blue);
-    font-weight: 800;
-    margin: 4px 0;
+    font-weight: 500;
+    margin: -4px 0;
     font-variant-numeric: tabular-nums; /* Prevents text jumping during count-ups */
+    line-height: 1.2;
 }
 
 /* Trend Indicators (Success/Neutral/Danger) */

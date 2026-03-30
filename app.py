@@ -125,6 +125,34 @@ first_delta = [None] + [round(scores[0]-s,1) for s in scores[1:]]
 team_df["Next Rank"] = next_delta
 team_df["1st Rank"] = first_delta
 
+st.markdown("""
+<style>
+.top-counter {
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    margin-top:-10px;
+    margin-bottom:8px;
+}
+
+.top-counter img {
+    height:24px;
+}
+
+/* Mobile */
+@media (max-width:768px) {
+    .top-counter {
+        justify-content:center;
+        margin-top:0px;
+    }
+}
+</style>
+
+<div class="top-counter">
+    <img src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fipl-dashboard-random.streamlit.app%2F&label=Visitors&icon=github&color=%230d6efd&message=&style=plastic&tz=UTC">
+</div>
+""", unsafe_allow_html=True)
+
 # ----------------------------------------
 # HEADER (NEW)
 # ----------------------------------------
@@ -137,40 +165,6 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-import streamlit.components.v1 as components
-
-components.html("""
-<div style="
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    gap:10px;
-    margin:10px 0;
-    font-family: Inter, sans-serif;
-">
-
-    <span style="
-        font-size:13px;
-        color:#94a3b8;
-        letter-spacing:0.5px;
-    ">
-        📊 Traffic - Visitors Count:
-    </span>
-
-    <span style="
-        background:rgba(56,189,248,0.1);
-        padding:4px 10px;
-        border-radius:8px;
-        border:1px solid rgba(56,189,248,0.2);
-        font-size:14px;
-        color:#38bdf8;
-        font-weight:600;
-    ">
-        <script type="text/javascript" src="https://counter.websiteout.com/js/22/0/0/0"></script>
-    </span>
-
-</div>
-""", height=50)
 
 # ----------------------------------------
 # PROGRESS BAR

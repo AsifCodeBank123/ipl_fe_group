@@ -42,7 +42,7 @@ selected_day = st.sidebar.selectbox(
 # ----------------------------------------
 #st.sidebar.markdown("🏏 IPL Dashboard")
 
-matches_left = TOTAL_MATCHES - selected_day
+matches_left = TOTAL_MATCHES - selected_day + 1
 
 st.sidebar.markdown(f"""
 ### 📌 Match Info
@@ -67,10 +67,12 @@ st.sidebar.markdown("""
 • Focus on active franchises  
 """)
 
+effective_day = max(selected_day - 1, 1)
+
 # ----------------------------------------
 # CALCULATIONS
 # ----------------------------------------
-scored_df = calculate_points(df, cap_df, selected_day)
+scored_df = calculate_points(df, cap_df, effective_day)
 watch_map = build_watchlist(df, matches_df, cap_df, selected_day)
 
 team_df = (
@@ -86,8 +88,8 @@ team_df["Watchlist"] = team_df["Owner"].map(watch_map)
 # ----------------------------------------
 # MOVEMENT
 # ----------------------------------------
-if selected_day > 1:
-    prev_df = calculate_points(df, cap_df, selected_day - 1)
+if effective_day > 1:
+    prev_df = calculate_points(df, cap_df, effective_day - 1)
 
     prev_team = (
         prev_df.groupby("owner_name")["player_points"]
@@ -138,13 +140,13 @@ st.markdown(f"""
 # ----------------------------------------
 # PROGRESS BAR
 # ----------------------------------------
-
-progress = selected_day / TOTAL_MATCHES
+matches_completed = max(selected_day - 1, 0)
+progress = matches_completed / TOTAL_MATCHES
 percent = int(progress * 100)
 
 st.markdown(f"""
 <div style="font-size:0.9rem;color:#94a3b8;margin-bottom:4px;margin-top:10px">
-📊 Season Progress: <b>{selected_day}</b> / {TOTAL_MATCHES} matches ({percent}%)
+📊 Season Progress: <b>{matches_completed}</b> / {TOTAL_MATCHES} matches ({percent}%)
 </div>
 """, unsafe_allow_html=True)
 
@@ -314,11 +316,18 @@ stack_df = (
 # ==================================================
 with tab1:
 
+    st.markdown(f"""
+    <span style="color:#94a3b8;font-size:0.85rem;">
+    ℹ️ Rankings & movement are based on completed matches. Watchlist shows upcoming players for Day {selected_day}.
+    </span>
+    """, unsafe_allow_html=True)
+
     st.markdown("### 🏆 Team Rankings")
 
     display_df = team_df[
         ["Rank", "Owner", "Points", "Movement", "Next Rank", "1st Rank", "Watchlist"]
-    ].rename(columns={"Points": "Total Points"})
+    ].rename(columns={"Points": "Total Points",
+                      "Watchlist": f"Watchlist (Day {selected_day})"})
 
     def highlight_top3(row):
         if row["Rank"] == 1:

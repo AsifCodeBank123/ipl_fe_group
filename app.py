@@ -137,6 +137,41 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
+import streamlit.components.v1 as components
+
+components.html("""
+<div style="
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    margin:10px 0;
+    font-family: Inter, sans-serif;
+">
+
+    <span style="
+        font-size:13px;
+        color:#94a3b8;
+        letter-spacing:0.5px;
+    ">
+        📊 Traffic - Visitors Count:
+    </span>
+
+    <span style="
+        background:rgba(56,189,248,0.1);
+        padding:4px 10px;
+        border-radius:8px;
+        border:1px solid rgba(56,189,248,0.2);
+        font-size:14px;
+        color:#38bdf8;
+        font-weight:600;
+    ">
+        <script type="text/javascript" src="https://counter.websiteout.com/js/22/0/0/0"></script>
+    </span>
+
+</div>
+""", height=50)
+
 # ----------------------------------------
 # PROGRESS BAR
 # ----------------------------------------

@@ -149,7 +149,7 @@ st.markdown("""
 </style>
 
 <div class="top-counter">
-    <img src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fipl-dashboard-fe.streamlit.app%2F&label=Visitors&icon=github&color=%230d6efd&message=&style=plastic&tz=UTC">
+    <img src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fipl-dashboard-fe.streamlit.app%2F&label=Visits&icon=github&color=%230d6efd&message=&style=plastic&tz=UTC">
 </div>
 """, unsafe_allow_html=True)
 

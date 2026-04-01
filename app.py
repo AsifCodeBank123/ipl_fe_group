@@ -690,80 +690,80 @@ with tab5:
     """)
 
     # -------------------------------
-# 🔹 Eligibility Check
-# -------------------------------
-if bid_price < 350:
-    st.error("❌ Not eligible for replacement (Price < $350)")
-    eligible_players = None
-else:
-    st.success("✅ Eligible for replacement")
-
-    # Show allowed price range
-    st.caption(f"Allowed price range: {bid_price} to {bid_price + 50}")
-
+    # 🔹 Eligibility Check
     # -------------------------------
-    # 🔹 Eligible Players Filter
-    # -------------------------------
-    eligible_players = df[
-        (df["player_name"] != selected_player) &
-        (df["owner_name"] != selected_owner) &
-        (df["bid_price"] >= bid_price + 50) &
-        (df["total_points"] <= player_points + 50)
-    ].copy()
+    if bid_price < 350:
+        st.error("❌ Not eligible for replacement (Price < $350)")
+        eligible_players = None
+    else:
+        st.success("✅ Eligible for replacement")
 
-    # -------------------------------
-    # 🔹 Display Results
-    # -------------------------------
-    if eligible_players is not None:
-
-        if eligible_players.empty:
-            st.warning("No eligible replacement players found.")
-        else:
-            eligible_players = eligible_players[
-                ["player_name", "owner_name", "bid_price", "total_points"]
-            ].sort_values(by="total_points", ascending=False)
-
-            # Add point difference
-            eligible_players["point_diff"] = (
-                eligible_players["total_points"] - player_points
-            )
-
-            # Highlight better players
-            def highlight(row):
-                if row["point_diff"] > 0:
-                    return ["background-color: rgba(34,197,94,0.2)"] * len(row)
-                return [""] * len(row)
-
-            # ✅ Apply format (NO decimals)
-            st.dataframe(
-                eligible_players.style
-                    .format({
-                        "bid_price": "{:.0f}",
-                        "total_points": "{:.0f}",
-                        "point_diff": "{:.0f}"
-                    })
-                    .apply(highlight, axis=1),
-                use_container_width=True,
-                hide_index=True
-            )
+        # Show allowed price range
+        st.caption(f"Allowed price range: {bid_price} to {bid_price + 50}")
 
         # -------------------------------
-        # 🔹 Divider
+        # 🔹 Eligible Players Filter
         # -------------------------------
-        st.markdown("---")
+        eligible_players = df[
+            (df["player_name"] != selected_player) &
+            (df["owner_name"] != selected_owner) &
+            (df["bid_price"] >= bid_price + 50) &
+            (df["total_points"] <= player_points + 50)
+        ].copy()
 
         # -------------------------------
-        # 🔹 Rules
+        # 🔹 Display Results
         # -------------------------------
-        st.info("""
-        📌 **Replacement Rules**
+        if eligible_players is not None:
 
-        1. Player price must be ≥ $350  
-        2. The replacement player should be priced at most at $50 higher than the ruled out player
-        3. The replacement players fantasy XI points should be equal to or max 50 points higher the ruled out player 
-        4. Points count from next match only  
-        5. If player is already C/VC in another team, cannot assign C/VC again  
-        """)
+            if eligible_players.empty:
+                st.warning("No eligible replacement players found.")
+            else:
+                eligible_players = eligible_players[
+                    ["player_name", "owner_name", "bid_price", "total_points"]
+                ].sort_values(by="total_points", ascending=False)
+
+                # Add point difference
+                eligible_players["point_diff"] = (
+                    eligible_players["total_points"] - player_points
+                )
+
+                # Highlight better players
+                def highlight(row):
+                    if row["point_diff"] > 0:
+                        return ["background-color: rgba(34,197,94,0.2)"] * len(row)
+                    return [""] * len(row)
+
+                # ✅ Apply format (NO decimals)
+                st.dataframe(
+                    eligible_players.style
+                        .format({
+                            "bid_price": "{:.0f}",
+                            "total_points": "{:.0f}",
+                            "point_diff": "{:.0f}"
+                        })
+                        .apply(highlight, axis=1),
+                    use_container_width=True,
+                    hide_index=True
+                )
+
+            # -------------------------------
+            # 🔹 Divider
+            # -------------------------------
+            st.markdown("---")
+
+            # -------------------------------
+            # 🔹 Rules
+            # -------------------------------
+            st.info("""
+            📌 **Replacement Rules**
+
+            1. Player price must be ≥ $350  
+            2. The replacement player should be priced at most at $50 higher than the ruled out player
+            3. The replacement players fantasy XI points should be equal to or max 50 points higher the ruled out player 
+            4. Points count from next match only  
+            5. If player is already C/VC in another team, cannot assign C/VC again  
+            """)
 # ----------------------------------------
 # FOOTER
 # ----------------------------------------

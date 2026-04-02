@@ -699,7 +699,7 @@ with tab5:
         st.success("✅ Eligible for replacement")
 
         # Show allowed price range
-        st.caption(f"Allowed price range: {bid_price} to {bid_price + 50}")
+        st.caption(f"Allowed price range: {int(bid_price)} to {int(bid_price + 50)}")
 
         # -------------------------------
         # 🔹 Eligible Players Filter
@@ -707,7 +707,8 @@ with tab5:
         eligible_players = df[
             (df["player_name"] != selected_player) &
             (df["owner_name"] != selected_owner) &
-            (df["bid_price"] >= bid_price + 50) &
+            (df["bid_price"] >= bid_price) &           # ✅ lower bound
+            (df["bid_price"] <= bid_price + 50) &      # ✅ upper bound
             (df["total_points"] <= player_points + 50)
         ].copy()
 

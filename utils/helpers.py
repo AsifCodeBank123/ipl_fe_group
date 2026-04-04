@@ -1,10 +1,12 @@
 def build_watchlist(df, matches_df, cap_df, selected_day):
 
+    rows = matches_df[matches_df["Day"] == selected_day]
+
     playing = set()
 
-    row = matches_df[matches_df["Day"] == selected_day]
-    if not row.empty:
-        playing = set(row.iloc[0]["Teams"].split(","))
+    for _, r in rows.iterrows():
+        teams = [t.strip() for t in r["Teams"].split(",")]
+        playing.update(teams)
 
     watch = {}
 

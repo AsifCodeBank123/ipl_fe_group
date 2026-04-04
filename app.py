@@ -107,14 +107,40 @@ if effective_day > 1:
 else:
     team_df["Movement"] = 0
 
-def format_movement(x):
-    if x > 0:
-        return f"▲ +{int(x)}"
-    if x < 0:
-        return f"▼ {int(x)}"
-    return "— 0"
+#Identify Top Gainer
 
-team_df["Movement"] = team_df["Movement"].apply(format_movement)
+day_col = f"day{effective_day}"
+
+if day_col in df.columns:
+    day_points = df.groupby("owner_name")[day_col].sum()
+    max_points = day_points.max()
+
+    # List of top owners (handles tie)
+    top_owners = day_points[day_points == max_points].index.tolist()
+else:
+    top_owners = []
+
+#Movement Formatter
+
+def format_movement(row):
+    movement = row["Movement"]
+    owner = row["Owner"]
+
+    # Arrow logic
+    if movement > 0:
+        text = f"▲ +{int(movement)}"
+    elif movement < 0:
+        text = f"▼ {int(movement)}"
+    else:
+        text = "— 0"
+
+    # Add 🔥 AFTER text
+    if owner in top_owners:
+        return f"{text} 🔥"
+
+    return text
+
+team_df["Movement"] = team_df.apply(format_movement, axis=1)
 
 # ----------------------------------------
 # DELTAS
@@ -185,60 +211,37 @@ st.markdown(f"""
 st.progress(progress)
 
 # ----------------------------------------
-# TOP CAPTAIN & VC CARDS
+# Highest & Lowest Gainer
 # ----------------------------------------
-cap_records = []
-vc_records = []
+day_col = f"day{effective_day}"
 
-for _, row in cap_df.iterrows():
-    owner = row["owner_name"]
-    start_day = row["from_day"]
-    captain = row["captain"]
-    vc = row["vice_captain"]
+if day_col in df.columns:
 
-    for d in range(start_day, selected_day + 1):
-        day_col = f"day{d}"
-        if day_col not in df.columns:
-            continue
+    day_points = (
+        df.groupby("owner_name")[day_col]
+        .sum()
+        .reset_index()
+    )
 
-        # Captain points
-        c_row = df[
-            (df["owner_name"] == owner) &
-            (df["player_name"] == captain)
-        ]
-        if not c_row.empty:
-            pts = pd.to_numeric(c_row.iloc[0].get(day_col, 0), errors="coerce")
-            pts = 0 if pd.isna(pts) else pts
-            cap_records.append((captain, pts * 2))
+    # Handle NaN
+    day_points[day_col] = pd.to_numeric(day_points[day_col], errors="coerce").fillna(0)
 
-        # VC points
-        vc_row = df[
-            (df["owner_name"] == owner) &
-            (df["player_name"] == vc)
-        ]
-        if not vc_row.empty:
-            pts = pd.to_numeric(vc_row.iloc[0].get(day_col, 0), errors="coerce")
-            pts = 0 if pd.isna(pts) else pts
-            vc_records.append((vc, pts * 1.5))
+    max_points = day_points[day_col].max()
+    min_points = day_points[day_col].min()
 
+    # Highest gainer
+    top_owner = day_points.loc[
+        day_points[day_col].idxmax(), "owner_name"
+    ] if max_points > 0 else "—"
 
-# Aggregate
-top_captain = (
-    pd.DataFrame(cap_records, columns=["player", "points"])
-    .groupby("player")["points"]
-    .sum()
-    .sort_values(ascending=False)
-)
+    # Lowest gainer
+    low_owner = day_points.loc[
+        day_points[day_col].idxmin(), "owner_name"
+    ] if max_points > 0 else "—"
 
-top_vc = (
-    pd.DataFrame(vc_records, columns=["player", "points"])
-    .groupby("player")["points"]
-    .sum()
-    .sort_values(ascending=False)
-)
-
-top_captain_name = top_captain.index[0] if not top_captain.empty else "—"
-top_vc_name = top_vc.index[0] if not top_vc.empty else "—"
+else:
+    top_owner = "—"
+    low_owner = "—"
 
 # ----------------------------------------
 # KPI (NEW)
@@ -256,19 +259,9 @@ k1.markdown(f"<div class='card'><h4>Teams</h4><h2>{len(team_df)}</h2></div>", un
 
 k2.markdown(f"<div class='card highlight'><h4>Leader</h4><h2>{team_df.iloc[0]['Owner']}</h2></div>", unsafe_allow_html=True)
 
-k3.markdown(f"""
-<div class='card'>
-<h4>Top Captain</h4>
-<h2>🧢 {top_captain_name}</h2>
-</div>
-""", unsafe_allow_html=True)
+k3.markdown(f"""<div class='card'><h4>🔥 Highest Gainer</h4><h2>{top_owner} ({int(max_points)}pts)</h2></div>""", unsafe_allow_html=True)
 
-k4.markdown(f"""
-<div class='card'>
-<h4>Top VC</h4>
-<h2>🎖️ {top_vc_name}</h2>
-</div>
-""", unsafe_allow_html=True)
+k4.markdown(f"""<div class='card'><h4>🧊 Lowest Gainer</h4><h2>{low_owner} ({int(min_points)}pts)</h2></div>""", unsafe_allow_html=True)
 
 st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 

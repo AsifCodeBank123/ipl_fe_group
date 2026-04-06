@@ -1,6 +1,7 @@
 import streamlit as st
 import plotly.express as px
 import pandas as pd
+import datetime
 
 from utils.data_loader import load_data, load_matches, load_captains
 from utils.calculator import calculate_points
@@ -41,6 +42,12 @@ selected_day = st.sidebar.selectbox(
 # SIDEBAR (IMPROVED)
 # ----------------------------------------
 #st.sidebar.markdown("🏏 IPL Dashboard")
+
+if st.sidebar.button("🔄 Refresh Data"):
+    st.cache_data.clear()
+    st.rerun()
+
+st.sidebar.markdown("---")
 
 matches_left = TOTAL_MATCHES - selected_day + 1
 
@@ -193,6 +200,9 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
+st.caption(f"📡 Data synced at: {datetime.datetime.now().strftime('%I:%M %p')}")
+st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+
 
 # ----------------------------------------
 # PROGRESS BAR
@@ -255,13 +265,85 @@ top_player = (
     .iloc[0]
 )
 
-k1.markdown(f"<div class='card'><h4>Teams</h4><h2>{len(team_df)}</h2></div>", unsafe_allow_html=True)
+k1.markdown(f"""
+<div style="
+    background: linear-gradient(135deg, rgba(148,163,184,0.12), rgba(100,116,139,0.05));
+    padding:16px;
+    border-radius:16px;
+    border:1px solid rgba(148,163,184,0.2);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    text-align:center;
+">
+    <div style="font-size:13px; color:#94a3b8; margin-bottom:6px;">
+        📊 Teams
+    </div>
+    <div style="font-size:22px; font-weight:700;">
+        {len(team_df)}
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
-k2.markdown(f"<div class='card highlight'><h4>Leader</h4><h2>{team_df.iloc[0]['Owner']}</h2></div>", unsafe_allow_html=True)
 
-k3.markdown(f"""<div class='card'><h4>🔥 Highest Gainer</h4><h2>{top_owner} ({int(max_points)}pts)</h2></div>""", unsafe_allow_html=True)
+k2.markdown(f"""
+<div style="
+    background: linear-gradient(135deg, rgba(251,191,36,0.18), rgba(245,158,11,0.08));
+    padding:16px;
+    border-radius:16px;
+    border:1px solid rgba(251,191,36,0.3);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    text-align:center;
+">
+    <div style="font-size:13px; color:#94a3b8; margin-bottom:6px;">
+        🏆 Leader
+    </div>
+    <div style="font-size:22px; font-weight:700;">
+        {team_df.iloc[0]['Owner']}
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
-k4.markdown(f"""<div class='card'><h4>🧊 Lowest Gainer</h4><h2>{low_owner} ({int(min_points)}pts)</h2></div>""", unsafe_allow_html=True)
+k3.markdown(f"""
+<div style="
+    background: linear-gradient(135deg, rgba(34,197,94,0.15), rgba(16,185,129,0.08));
+    padding:16px;
+    border-radius:16px;
+    border:1px solid rgba(34,197,94,0.25);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    text-align:center;
+">
+    <div style="font-size:13px; color:#94a3b8; margin-bottom:6px;">
+        🔥 Highest Gainer
+    </div>
+    <div style="font-size:22px; font-weight:700;">
+        {top_owner}
+    </div>
+    <div style="font-size:13px; color:#22c55e;">
+        {int(max_points)} pts
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+
+k4.markdown(f"""
+<div style="
+    background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(37,99,235,0.08));
+    padding:16px;
+    border-radius:16px;
+    border:1px solid rgba(59,130,246,0.25);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    text-align:center;
+">
+    <div style="font-size:13px; color:#94a3b8; margin-bottom:6px;">
+        🧊 Lowest Gainer
+    </div>
+    <div style="font-size:22px; font-weight:700;">
+        {low_owner}
+    </div>
+    <div style="font-size:13px; color:#3b82f6;">
+        {int(min_points)} pts
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
@@ -351,9 +433,12 @@ with tab1:
 
     display_df = team_df[
         ["Rank", "Owner", "Points", "Movement", "Next Rank", "1st Rank", "Watchlist"]
-    ].rename(columns={"Points": "Total Points",
-                      "Watchlist": f"Watchlist (Day {selected_day})"})
+    ].rename(columns={
+        "Points": "Total Points",
+        "Watchlist": f"Watchlist (Day {selected_day})"
+    })
 
+    # 🔥 Highlight Top 3
     def highlight_top3(row):
         if row["Rank"] == 1:
             style = "background-color:#FFD700;color:black;font-weight:800"
@@ -383,35 +468,64 @@ with tab1:
         use_container_width=True,
         hide_index=True
     )
+
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
-    # CAPTAIN SECTION
+    # ==================================================
+    # 🧠 CAPTAIN STRATEGY (FINAL CLEAN VERSION)
+    # ==================================================
     st.markdown("### 🧠 Captain Strategy")
 
     cap_df.columns = [c.lower() for c in cap_df.columns]
 
+    # 🔧 Clean history + return changes count
+    def format_history(series):
+        if series.empty:
+            return "—", 0
+
+        cleaned = []
+        prev = None
+
+        for name in series.tolist():
+            if name != prev:
+                cleaned.append(name)
+                prev = name
+
+        history_str = cleaned[0] if len(cleaned) == 1 else " → ".join(cleaned)
+        changes = max(len(cleaned) - 1, 0)
+
+        return history_str, changes
+
     rows = []
 
     for owner in df["owner_name"].unique():
-        oc = cap_df[cap_df["owner_name"]==owner]
+
+        oc = cap_df[
+            cap_df["owner_name"] == owner
+        ].sort_values("from_day")
 
         if not oc.empty:
-            latest = oc.iloc[-1]
-            c = latest["captain"]
-            vc = latest["vice_captain"]
+            captain_history, cap_changes = format_history(oc["captain"])
+            vc_history, vc_changes = format_history(oc["vice_captain"])
         else:
-            c, vc = "—","—"
+            captain_history, vc_history = "—", "—"
+            cap_changes, vc_changes = 0, 0
+
+        # ✅ Total changes (Captain + VC)
+        total_changes = cap_changes + vc_changes
 
         rows.append({
-            "Owner":owner,
-            "Captain":c,
+            "Owner": owner,
+            "Captain": captain_history,
             "Cap Points": get_c_vc_points(owner, "captain"),
-            "Vice Captain":vc,
+            "Vice Captain": vc_history,
             "VC Points": get_c_vc_points(owner, "vc"),
-            "Changes":len(oc)-1
+            "Changes": total_changes
         })
 
-    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    cap_table = pd.DataFrame(rows)
+
+    st.dataframe(cap_table,use_container_width=True,hide_index=True)
 
 # ==================================================
 # TAB 2

@@ -1,10 +1,25 @@
 import pandas as pd
+import streamlit as st
 import os
 
+
+#for google sheet
+@st.cache_data
 def load_data():
-    df = pd.read_csv("data/points.csv")
-    df.columns = df.columns.str.lower().str.strip().str.replace(" ", "", regex=False)
+
+    sheet_id = "1saVEcqsG-AvFat-O8-X3V_6s1EySsnZC7KIWcyT537U"
+
+    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
+
+    df = pd.read_csv(url)
+
     return df
+
+# #local csv
+# def load_data():
+#     df = pd.read_csv("data/points.csv")
+#     df.columns = df.columns.str.lower().str.strip().str.replace(" ", "", regex=False)
+#     return df
 
 def load_matches():
     if os.path.exists("data/matches_by_day.csv"):

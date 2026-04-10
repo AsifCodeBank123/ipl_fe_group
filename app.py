@@ -2,6 +2,7 @@ import streamlit as st
 import plotly.express as px
 import pandas as pd
 import datetime
+import pytz
 
 from utils.data_loader import load_data, load_matches, load_captains
 from utils.calculator import calculate_points
@@ -12,6 +13,10 @@ from utils.helpers import build_watchlist
 # ----------------------------------------
 st.set_page_config(layout="wide", page_title="IPL Dashboard-FE Group")
 TOTAL_MATCHES = 74
+
+ist = pytz.timezone("Asia/Kolkata")
+current_time = datetime.datetime.now(ist)
+
 
 # ----------------------------------------
 # LOAD CSS
@@ -200,7 +205,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-st.caption(f"📡 Data synced at: {datetime.datetime.now().strftime('%I:%M %p')}")
+st.caption(f"📡 Data synced at: {current_time.strftime('%I:%M %p')}")
 st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
 

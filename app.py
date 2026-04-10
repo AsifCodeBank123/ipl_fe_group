@@ -48,7 +48,8 @@ if st.sidebar.button("🔄 Refresh Data"):
     st.cache_data.clear()
 
     ist = pytz.timezone("Asia/Kolkata")
-    current_time = datetime.datetime.now(ist)
+    # ✅ STORE in session state
+    st.session_state["last_refresh"] = datetime.datetime.now(ist)
 
     st.rerun()
 
@@ -210,7 +211,7 @@ if "last_refresh" in st.session_state:
     st.caption(f"📡 Data synced at: {last.strftime('%d %b, %I:%M %p IST')}")
 else:
     st.caption("📡 Data not refreshed yet")
-    
+
 st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
 

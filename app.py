@@ -14,10 +14,6 @@ from utils.helpers import build_watchlist
 st.set_page_config(layout="wide", page_title="IPL Dashboard-FE Group")
 TOTAL_MATCHES = 74
 
-ist = pytz.timezone("Asia/Kolkata")
-current_time = datetime.datetime.now(ist)
-
-
 # ----------------------------------------
 # LOAD CSS
 # ----------------------------------------
@@ -50,6 +46,10 @@ selected_day = st.sidebar.selectbox(
 
 if st.sidebar.button("🔄 Refresh Data"):
     st.cache_data.clear()
+
+    ist = pytz.timezone("Asia/Kolkata")
+    current_time = datetime.datetime.now(ist)
+
     st.rerun()
 
 st.sidebar.markdown("---")
@@ -205,7 +205,12 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-st.caption(f"📡 Data synced at: {current_time.strftime('%I:%M %p')}")
+if "last_refresh" in st.session_state:
+    last = st.session_state["last_refresh"]
+    st.caption(f"📡 Data synced at: {last.strftime('%d %b, %I:%M %p IST')}")
+else:
+    st.caption("📡 Data not refreshed yet")
+    
 st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
 

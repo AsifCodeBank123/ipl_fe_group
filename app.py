@@ -121,40 +121,40 @@ else:
     team_df["Movement"] = 0
 
 # ----------------------------------------
-    # 🔥 DAILY GAINER (WITH C/VC MULTIPLIER)
-    # ----------------------------------------
+# 🔥 DAILY GAINER (WITH C/VC MULTIPLIER)
+# ----------------------------------------
 
-    # Current total (till today)
-    curr_points = (
-        scored_df.groupby("owner_name")["player_points"]
+# Current total (till today)
+curr_points = (
+    scored_df.groupby("owner_name")["player_points"]
+    .sum()
+)
+
+# Previous total (till yesterday)
+if effective_day > 1:
+    prev_df = calculate_points(df, cap_df, effective_day - 1)
+
+    prev_points = (
+        prev_df.groupby("owner_name")["player_points"]
         .sum()
     )
 
-    # Previous total (till yesterday)
-    if effective_day > 1:
-        prev_df = calculate_points(df, cap_df, effective_day - 1)
+    day_points = curr_points - prev_points
+else:
+    day_points = curr_points
 
-        prev_points = (
-            prev_df.groupby("owner_name")["player_points"]
-            .sum()
-        )
+# Handle NaN (day 1)
+day_points = day_points.fillna(curr_points)
 
-        day_points = curr_points - prev_points
-    else:
-        day_points = curr_points
+max_points = day_points.max()
+min_points = day_points.min()
 
-    # Handle NaN (day 1)
-    day_points = day_points.fillna(curr_points)
-
-    max_points = day_points.max()
-    min_points = day_points.min()
-
-    if max_points > 0:
-        top_owner = day_points.idxmax()
-        low_owner = day_points.idxmin()
-    else:
-        top_owner = "—"
-        low_owner = "—"
+if max_points > 0:
+    top_owner = day_points.idxmax()
+    low_owner = day_points.idxmin()
+else:
+    top_owner = "—"
+    low_owner = "—"
 
 #Movement Formatter
 

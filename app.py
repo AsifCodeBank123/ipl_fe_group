@@ -121,21 +121,21 @@ else:
     team_df["Movement"] = 0
 
 # ----------------------------------------
-# 🔥 DAILY GAINER (WITH C/VC MULTIPLIER)
+# 🔥 CORRECT DAILY GAINER (WITH C/VC MULTIPLIER)
 # ----------------------------------------
 
-# Current total (till today)
+# Current total (till selected day)
 curr_points = (
     scored_df.groupby("owner_name")["player_points"]
     .sum()
 )
 
-# Previous total (till yesterday)
+# Previous total (till previous day)
 if effective_day > 1:
-    prev_df = calculate_points(df, cap_df, effective_day - 1)
+    prev_scored = calculate_points(df, cap_df, effective_day - 1)
 
     prev_points = (
-        prev_df.groupby("owner_name")["player_points"]
+        prev_scored.groupby("owner_name")["player_points"]
         .sum()
     )
 
@@ -143,18 +143,15 @@ if effective_day > 1:
 else:
     day_points = curr_points
 
-# Handle NaN (day 1)
+# Clean NaN (for day1 case)
 day_points = day_points.fillna(curr_points)
 
 max_points = day_points.max()
-min_points = day_points.min()
 
 if max_points > 0:
-    top_owner = day_points.idxmax()
-    low_owner = day_points.idxmin()
+    top_owners = day_points[day_points == max_points].index.tolist()
 else:
-    top_owner = "—"
-    low_owner = "—"
+    top_owners = []
 
 #Movement Formatter
 
@@ -171,7 +168,7 @@ def format_movement(row):
         text = "— 0"
 
     # Add 🔥 AFTER text
-    if owner in top_owner:
+    if owner in top_owners:
         return f"{text} 🔥"
 
     return text

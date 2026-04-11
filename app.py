@@ -252,37 +252,37 @@ st.markdown(f"""
 st.progress(progress)
 
 # ----------------------------------------
-# Highest & Lowest Gainer
+# ✅ CORRECT HIGHEST & LOWEST GAINER (WITH C/VC)
 # ----------------------------------------
-day_col = f"day{effective_day}"
 
-if day_col in df.columns:
+# Current total (with C/VC)
+curr_points = (
+    scored_df.groupby("owner_name")["player_points"]
+    .sum()
+)
 
-    day_points = (
-        df.groupby("owner_name")[day_col]
+# Previous total (with C/VC)
+if effective_day > 1:
+    prev_scored = calculate_points(df, cap_df, effective_day - 1)
+
+    prev_points = (
+        prev_scored.groupby("owner_name")["player_points"]
         .sum()
-        .reset_index()
     )
 
-    # Handle NaN
-    day_points[day_col] = pd.to_numeric(day_points[day_col], errors="coerce").fillna(0)
-
-    max_points = day_points[day_col].max()
-    min_points = day_points[day_col].min()
-
-    # Highest gainer
-    top_owner = day_points.loc[
-        day_points[day_col].idxmax(), "owner_name"
-    ] if max_points > 0 else "—"
-
-    # Lowest gainer
-    low_owner = day_points.loc[
-        day_points[day_col].idxmin(), "owner_name"
-    ] if max_points > 0 else "—"
-
+    day_points = curr_points - prev_points
 else:
-    top_owner = "—"
-    low_owner = "—"
+    day_points = curr_points
+
+# Clean NaN
+day_points = day_points.fillna(curr_points)
+
+max_points = day_points.max()
+min_points = day_points.min()
+
+# Top & Low owner
+top_owner = day_points.idxmax() if max_points > 0 else "—"
+low_owner = day_points.idxmin() if max_points > 0 else "—"
 
 # ----------------------------------------
 # KPI (NEW)

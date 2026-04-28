@@ -396,51 +396,66 @@ st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 # AI INSIGHTS SECTION
 # --------------------------------------------------
 
-st.markdown('<div class="section">', unsafe_allow_html=True)
-
-st.markdown("### 🧠 AI Insights of the Day")
-
 with st.spinner("🧠 Thinking..."):
     insights = generate_ai_insights_cached(team_df, selected_day)
 
 # -------------------------
-# CLEAN FORMAT FIX
+# CLEAN + SPLIT
 # -------------------------
+import re
+
+def format_numbers(text):
+    def repl(match):
+        num = int(match.group())
+        return f"{num:,}"
+    return re.sub(r"\b\d{3,}\b", repl, text)
+
 lines = insights.replace("*", "").replace("-", "").split("\n")
 clean_lines = [l.strip() for l in lines if l.strip()]
 
-# fallback if AI returns single line
-if len(clean_lines) == 1:
-    text = clean_lines[0]
+rising = clean_lines[0] if len(clean_lines) > 0 else ""
+falling = clean_lines[1] if len(clean_lines) > 1 else ""
+battle = clean_lines[2] if len(clean_lines) > 2 else ""
+extra = clean_lines[3] if len(clean_lines) > 3 else ""
 
-    r_split = text.split("🔽")
-    rising = r_split[0]
-
-    f_split = r_split[1].split("⚖️") if len(r_split) > 1 else ["", ""]
-    falling = f_split[0]
-    battle = f_split[1] if len(f_split) > 1 else ""
-
-else:
-    rising = clean_lines[0] if len(clean_lines) > 0 else ""
-    falling = clean_lines[1] if len(clean_lines) > 1 else ""
-    battle = clean_lines[2] if len(clean_lines) > 2 else ""
+# format numbers
+rising = format_numbers(rising)
+falling = format_numbers(falling)
+battle = format_numbers(battle)
+extra = format_numbers(extra)
 
 # -------------------------
-# DISPLAY
+# CARD LAYOUT
 # -------------------------
-st.markdown(f"""
-<div class="ai-box">
+c1, c2, c3, c4 = st.columns(4)
 
-<div class="ai-item"> {rising}</div>
-
-<div class="ai-item"> {falling}</div>
-
-<div class="ai-item"> {battle}</div>
-
+c1.markdown(f"""
+<div class="ai-card rise">
+    <div class="ai-title">🔼 Rising</div>
+    <div class="ai-text">{rising}</div>
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown('</div>', unsafe_allow_html=True)
+c2.markdown(f"""
+<div class="ai-card fall">
+    <div class="ai-title">🔽 Falling</div>
+    <div class="ai-text">{falling}</div>
+</div>
+""", unsafe_allow_html=True)
+
+c3.markdown(f"""
+<div class="ai-card battle">
+    <div class="ai-title">⚖️ Key Battle</div>
+    <div class="ai-text">{battle}</div>
+</div>
+""", unsafe_allow_html=True)
+
+c4.markdown(f"""
+<div class="ai-card insight">
+    <div class="ai-title">💡Bonus Insight</div>
+    <div class="ai-text">{extra}</div>
+</div>
+""", unsafe_allow_html=True)
 st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
 # ----------------------------------------

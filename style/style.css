@@ -319,32 +319,63 @@ tbody tr:hover {
     }
 }
 
-.ai-box {
-    background: linear-gradient(145deg, #020617, #0f172a);
-    border: 1px solid rgba(56,189,248,0.2);
-    border-radius: 12px;
+/* AI CARD GRID */
+.ai-card {
+    border-radius: 14px;
     padding: 14px;
-    font-size: 13px;
-    line-height: 1.6;
-    color: #e5e7eb;
-    margin-top: 10px;
+    height: 100%;
+    transition: 0.2s ease;
+    border: 1px solid rgba(255,255,255,0.05);
 }
 
-.ai-item {
-    margin-bottom: 8px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    background: rgba(56,189,248,0.05);
-    border-left: 3px solid #38bdf8;
+.ai-card:hover {
+    transform: translateY(-3px);
+}
+
+/* TITLE */
+.ai-title {
     font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+/* TEXT */
+.ai-text {
+    font-size: 12.5px;
     line-height: 1.5;
+    color: #cbd5f5;
 }
 
-/* LIGHT MODE */
+/* COLOR THEMES */
+.ai-card.rise {
+    background: linear-gradient(145deg, #022c22, #064e3b);
+    border-left: 4px solid #10b981;
+}
+
+.ai-card.fall {
+    background: linear-gradient(145deg, #2c0b0b, #450a0a);
+    border-left: 4px solid #ef4444;
+}
+
+.ai-card.battle {
+    background: linear-gradient(145deg, #1e293b, #0f172a);
+    border-left: 4px solid #38bdf8;
+}
+
+.ai-card.insight {
+    background: linear-gradient(145deg, #1e1b4b, #020617);
+    border-left: 4px solid #a78bfa;
+}
+
+/* LIGHT MODE FIX */
 @media (prefers-color-scheme: light) {
-    .ai-box {
-        background: #ffffff;
+    .ai-card {
+        background: white;
         color: #0f172a;
         border: 1px solid #e5e7eb;
+    }
+
+    .ai-text {
+        color: #334155;
     }
 }

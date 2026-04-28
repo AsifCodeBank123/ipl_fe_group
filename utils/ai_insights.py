@@ -47,26 +47,32 @@ def generate_ai_insights(team_df):
     data = build_ai_input(team_df)
 
     prompt = f"""
-        You are a fantasy cricket analyst.
+        You are a fantasy cricket expert.
 
         Based on standings:
         {data}
 
         Return output in EXACT format:
 
-        🔼 Rising
+        Rising:
         <Name> (Rank X)
-        <1 short line>
+        <short line>
 
-        🔽 Falling
+        Falling:
         <Name> (Rank X)
-        <1 short line>
+        <short line>
 
-        ⚖️ Key Battle
+        Key Battle:
         <Name vs Name>
-        <1 short line>
+        <short line with points difference>
 
-        No bullets, no markdown symbols (*, -), keep it clean.
+        Bonus Insight:
+        <one additional smart observation>
+
+        Rules:
+        - Keep each line short
+        - Use numbers like 1188 (no commas, formatting handled later)
+        - No markdown, no symbols (*, -)
         """
 
     response = client.chat.completions.create(

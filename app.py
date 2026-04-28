@@ -7,6 +7,7 @@ import pytz
 from utils.data_loader import load_data, load_matches, load_captains
 from utils.calculator import calculate_points
 from utils.helpers import build_watchlist
+from utils.ai_insights import generate_ai_insights_cached
 
 # ----------------------------------------
 # CONFIG
@@ -389,6 +390,57 @@ k4.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
+st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+
+# --------------------------------------------------
+# AI INSIGHTS SECTION
+# --------------------------------------------------
+
+st.markdown('<div class="section">', unsafe_allow_html=True)
+
+st.markdown("### 🧠 AI Insights of the Day")
+
+with st.spinner("🧠 Thinking..."):
+    insights = generate_ai_insights_cached(team_df, selected_day)
+
+# -------------------------
+# CLEAN FORMAT FIX
+# -------------------------
+lines = insights.replace("*", "").replace("-", "").split("\n")
+clean_lines = [l.strip() for l in lines if l.strip()]
+
+# fallback if AI returns single line
+if len(clean_lines) == 1:
+    text = clean_lines[0]
+
+    r_split = text.split("🔽")
+    rising = r_split[0]
+
+    f_split = r_split[1].split("⚖️") if len(r_split) > 1 else ["", ""]
+    falling = f_split[0]
+    battle = f_split[1] if len(f_split) > 1 else ""
+
+else:
+    rising = clean_lines[0] if len(clean_lines) > 0 else ""
+    falling = clean_lines[1] if len(clean_lines) > 1 else ""
+    battle = clean_lines[2] if len(clean_lines) > 2 else ""
+
+# -------------------------
+# DISPLAY
+# -------------------------
+st.markdown(f"""
+<div class="ai-box">
+
+<div class="ai-item"> {rising}</div>
+
+<div class="ai-item"> {falling}</div>
+
+<div class="ai-item"> {battle}</div>
+
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
 st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
 # ----------------------------------------

@@ -318,3 +318,33 @@ tbody tr:hover {
         background: #e0f2fe;
     }
 }
+
+.ai-box {
+    background: linear-gradient(145deg, #020617, #0f172a);
+    border: 1px solid rgba(56,189,248,0.2);
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #e5e7eb;
+    margin-top: 10px;
+}
+
+.ai-item {
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: rgba(56,189,248,0.05);
+    border-left: 3px solid #38bdf8;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* LIGHT MODE */
+@media (prefers-color-scheme: light) {
+    .ai-box {
+        background: #ffffff;
+        color: #0f172a;
+        border: 1px solid #e5e7eb;
+    }
+}

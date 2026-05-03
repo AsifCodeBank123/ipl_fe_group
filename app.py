@@ -392,72 +392,6 @@ k4.markdown(f"""
 
 st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
-# --------------------------------------------------
-# AI INSIGHTS SECTION
-# --------------------------------------------------
-
-with st.spinner("🧠 Thinking..."):
-    insights = generate_ai_insights_cached(team_df, selected_day)
-
-# -------------------------
-# CLEAN + SPLIT
-# -------------------------
-import re
-
-def format_numbers(text):
-    def repl(match):
-        num = int(match.group())
-        return f"{num:,}"
-    return re.sub(r"\b\d{3,}\b", repl, text)
-
-lines = insights.replace("*", "").replace("-", "").split("\n")
-clean_lines = [l.strip() for l in lines if l.strip()]
-
-rising = clean_lines[0] if len(clean_lines) > 0 else ""
-falling = clean_lines[1] if len(clean_lines) > 1 else ""
-battle = clean_lines[2] if len(clean_lines) > 2 else ""
-extra = clean_lines[3] if len(clean_lines) > 3 else ""
-
-# format numbers
-rising = format_numbers(rising)
-falling = format_numbers(falling)
-battle = format_numbers(battle)
-extra = format_numbers(extra)
-
-# -------------------------
-# CARD LAYOUT
-# -------------------------
-c1, c2, c3, c4 = st.columns(4)
-
-c1.markdown(f"""
-<div class="ai-card rise">
-    <div class="ai-title">🔼 Rising</div>
-    <div class="ai-text">{rising}</div>
-</div>
-""", unsafe_allow_html=True)
-
-c2.markdown(f"""
-<div class="ai-card fall">
-    <div class="ai-title">🔽 Falling</div>
-    <div class="ai-text">{falling}</div>
-</div>
-""", unsafe_allow_html=True)
-
-c3.markdown(f"""
-<div class="ai-card battle">
-    <div class="ai-title">⚖️ Key Battle</div>
-    <div class="ai-text">{battle}</div>
-</div>
-""", unsafe_allow_html=True)
-
-c4.markdown(f"""
-<div class="ai-card insight">
-    <div class="ai-title">💡Bonus Insight</div>
-    <div class="ai-text">{extra}</div>
-</div>
-""", unsafe_allow_html=True)
-st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
-
 # ----------------------------------------
 # TABS
 # ----------------------------------------
@@ -1084,6 +1018,74 @@ with tab5:
             use_container_width=True,
             hide_index=True
         )
+
+st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+
+# --------------------------------------------------
+# AI INSIGHTS SECTION
+# --------------------------------------------------
+
+with st.spinner("🧠 Thinking..."):
+    insights = generate_ai_insights_cached(team_df, selected_day)
+
+# -------------------------
+# CLEAN + SPLIT
+# -------------------------
+import re
+
+def format_numbers(text):
+    def repl(match):
+        num = int(match.group())
+        return f"{num:,}"
+    return re.sub(r"\b\d{3,}\b", repl, text)
+
+lines = insights.replace("*", "").replace("-", "").split("\n")
+clean_lines = [l.strip() for l in lines if l.strip()]
+
+rising = clean_lines[0] if len(clean_lines) > 0 else ""
+falling = clean_lines[1] if len(clean_lines) > 1 else ""
+battle = clean_lines[2] if len(clean_lines) > 2 else ""
+extra = clean_lines[3] if len(clean_lines) > 3 else ""
+
+# format numbers
+rising = format_numbers(rising)
+falling = format_numbers(falling)
+battle = format_numbers(battle)
+extra = format_numbers(extra)
+
+# -------------------------
+# CARD LAYOUT
+# -------------------------
+c1, c2, c3, c4 = st.columns(4)
+
+c1.markdown(f"""
+<div class="ai-card rise">
+    <div class="ai-title">🔼 Rising</div>
+    <div class="ai-text">{rising}</div>
+</div>
+""", unsafe_allow_html=True)
+
+c2.markdown(f"""
+<div class="ai-card fall">
+    <div class="ai-title">🔽 Falling</div>
+    <div class="ai-text">{falling}</div>
+</div>
+""", unsafe_allow_html=True)
+
+c3.markdown(f"""
+<div class="ai-card battle">
+    <div class="ai-title">⚖️ Key Battle</div>
+    <div class="ai-text">{battle}</div>
+</div>
+""", unsafe_allow_html=True)
+
+c4.markdown(f"""
+<div class="ai-card insight">
+    <div class="ai-title">💡Bonus Insight</div>
+    <div class="ai-text">{extra}</div>
+</div>
+""", unsafe_allow_html=True)
+st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
 
 # ----------------------------------------

@@ -379,3 +379,88 @@ tbody tr:hover {
         color: #334155;
     }
 }
+
+/* MATCH CARD */
+.match-card {
+    background: linear-gradient(145deg, #111827, #020617);
+    border-radius: 16px;
+    padding: 16px;
+    min-height: 220px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    border: 1px solid rgba(255,255,255,0.06);
+
+    transition: 0.2s ease;
+}
+
+.match-card:hover {
+    transform: translateY(-4px);
+}
+
+/* TOP */
+.match-top {
+    text-align: center;
+}
+
+.match-day {
+    font-size: 11px;
+    color: #94a3b8;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+}
+
+.match-teams {
+    font-size: 17px;
+    font-weight: 700;
+    color: white;
+}
+
+/* DIVIDER */
+.match-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.08);
+    margin: 12px 0;
+}
+
+/* LABELS */
+.match-label,
+.match-points-label {
+    font-size: 11px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+/* OWNER */
+.match-owner {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #38bdf8;
+    margin: 6px 0 14px 0;
+}
+
+/* POINTS */
+.match-points {
+    text-align: center;
+    font-size: 24px;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+/* LIGHT MODE */
+@media (prefers-color-scheme: light) {
+
+    .match-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+    }
+
+    .match-teams,
+    .match-points {
+        color: #0f172a;
+    }
+}

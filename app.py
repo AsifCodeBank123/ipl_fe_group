@@ -3,6 +3,7 @@ import plotly.express as px
 import pandas as pd
 import datetime
 import pytz
+import textwrap
 
 from utils.data_loader import load_data, load_matches, load_captains
 from utils.calculator import calculate_points
@@ -399,15 +400,13 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["🏆 Rankings","👥 Players","�
 
 #helper to compute captain and vc points for captain strategy table
 
-def get_c_vc_points(owner, role="captain"):
-    
+def get_c_vc_points(df,cap_df,owner,selected_day,role="captain"):
+
     oc = cap_df[cap_df["owner_name"] == owner].sort_values("from_day")
-    
     if oc.empty:
         return "—"
-    
-    player_points_list = []
 
+    pts_list = []
     for d in range(1, selected_day + 1):
         day_col = f"day{d}"
         if day_col not in df.columns:
@@ -420,24 +419,39 @@ def get_c_vc_points(owner, role="captain"):
         latest = cap_row.iloc[-1]
         player = latest["captain"] if role == "captain" else latest["vice_captain"]
 
-        player_row = df[
-            (df["owner_name"] == owner) &
-            (df["player_name"] == player)
-        ]
-
+        player_row = df[(df["owner_name"] == owner) & (df["player_name"] == player)]
         if player_row.empty:
             continue
 
-        points = pd.to_numeric(player_row.iloc[0].get(day_col, 0), errors="coerce")
-        points = 0 if pd.isna(points) else points
+        pts = pd.to_numeric(player_row.iloc[0].get(day_col, 0), errors="coerce")
+        pts = 0 if pd.isna(pts) else pts
 
-        multiplier = 2.0 if role == "captain" else 1.5
-        value = round(points * multiplier, 1)
+        mult = 2.0 if role == "captain" else 1.5
+        val = round(pts * mult, 1)
 
-        if value != 0:
-            player_points_list.append(value)
+        if val != 0:
+            pts_list.append(val)
 
-    return "—" if not player_points_list else f"({', '.join(map(str, player_points_list))})"
+    return "—" if not pts_list else f"({', '.join(map(str, pts_list))})"
+
+def get_current_c_vc(cap_df, owner, day):
+
+    owner_changes = cap_df[
+        (cap_df["owner_name"] == owner) &
+        (cap_df["from_day"] <= day)
+    ]
+
+    if owner_changes.empty:
+        return None, None
+
+    latest = owner_changes.sort_values(
+        "from_day"
+    ).iloc[-1]
+
+    return (
+        latest["captain"],
+        latest["vice_captain"]
+    )
 
 # ----------------------------------------
 # PLAYER IMPACT SEGMENTATION
@@ -516,6 +530,227 @@ with tab1:
 
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
+    # --------------------------------------------------
+    # UPCOMING MATCH FORECASTS
+    # --------------------------------------------------
+
+    st.markdown("## 📈 Upcoming Match Forecasts")
+
+    # --------------------------------------------------
+    # NEXT 5 MATCHES
+    # --------------------------------------------------
+    future_matches = matches_df[
+        matches_df["Day"] >= selected_day
+    ].head(5).copy()
+
+    if not future_matches.empty:
+
+        future_matches["match_label"] = future_matches.apply(
+            lambda x: (
+                f"Day {x['Day']} - "
+                f"{x['Teams'].split(',')[0].strip()} vs "
+                f"{x['Teams'].split(',')[1].strip()}"
+            ),
+            axis=1
+        )
+        # --------------------------------------------------
+        # BUILD FORECASTS
+        # --------------------------------------------------
+
+        all_match_forecasts = {}
+        summary_rows = []
+
+        for _, match in future_matches.iterrows():
+
+            match_label = match["match_label"]
+
+            teams = [
+                t.strip()
+                for t in match["Teams"].split(",")
+            ]
+
+            forecast_rows = []
+
+            # ----------------------------------------
+            # OWNER FORECAST
+            # ----------------------------------------
+            for owner, group in df.groupby("owner_name"):
+
+                owner_players = group[
+                    group["franchise"].isin(teams)
+                ].copy()
+
+                total = 0
+
+                # current captain / VC for that match day
+                captain, vice_captain = get_current_c_vc(
+                    cap_df,
+                    owner,
+                    match["Day"]
+                )
+
+                # ----------------------------------------
+                # PLAYER FORECAST
+                # ----------------------------------------
+                for _, r in owner_players.iterrows():
+
+                    player = r["player_name"]
+
+                    player_scores = []
+
+                    for d in range(1, selected_day + 1):
+
+                        day_col = f"day{d}"
+
+                        pts = pd.to_numeric(
+                            r.get(day_col, 0),
+                            errors="coerce"
+                        )
+
+                        pts = 0 if pd.isna(pts) else pts
+
+                        # ----------------------------------------
+                        # APPLY FORECAST MULTIPLIER
+                        # ----------------------------------------
+                        if player == captain:
+                            pts *= 2
+
+                        elif player == vice_captain:
+                            pts *= 1.5
+
+                        if pts != 0:
+                            player_scores.append(pts)
+
+                    # ----------------------------------------
+                    # PLAYER AVERAGE
+                    # ----------------------------------------
+                    avg_points = (
+                        sum(player_scores) / len(player_scores)
+                        if player_scores else 0
+                    )
+
+                    total += avg_points
+
+                forecast_rows.append({
+                    "Owner": owner,
+                    "Predicted Points": round(total, 1)
+                })
+
+            # ----------------------------------------
+            # FORECAST DF
+            # ----------------------------------------
+            forecast_df = pd.DataFrame(forecast_rows)
+
+            forecast_df = forecast_df.sort_values(
+                "Predicted Points",
+                ascending=False
+            )
+
+            all_match_forecasts[match_label] = forecast_df
+
+            # ----------------------------------------
+            # SUMMARY ROW
+            # ----------------------------------------
+            top_row = forecast_df.iloc[0]
+
+            summary_rows.append({
+                "Match": match_label,
+                "Top Owner": top_row["Owner"],
+                "Best Forecast": round(top_row["Predicted Points"], 1)
+            })
+
+        # --------------------------------------------------
+        # SUMMARY DF
+        # --------------------------------------------------
+        summary_df = pd.DataFrame(summary_rows)
+
+    
+        # --------------------------------------------------
+        # MATCH FORECAST CARDS
+        # --------------------------------------------------
+
+        card_cols = st.columns(len(summary_df))
+
+        for i, (_, row) in enumerate(summary_df.iterrows()):
+            # Split the match string (assuming format "Day 45 • PBKS vs DC")
+            day_part = row['Match'].split('-')[0].replace('Day', '').strip()
+            team_part = row['Match'].split('-')[1].strip()
+
+            # Use dedent to ensure no leading spaces trigger a "code block" look
+            html = textwrap.dedent(f"""
+                <div class="match-card">
+                    <div class="match-top">
+                        <div class="match-day">DAY {day_part}</div>
+                        <div class="match-teams">{team_part}</div>
+                    </div>
+                    <div class="match-divider"></div>
+                    <div class="match-label">🔥 Top Owner</div>
+                    <div class="match-owner">{row['Top Owner']}</div>
+                    <div class="match-points-label">Forecast</div>
+                    <div class="match-points">{row['Best Forecast']} pts</div>
+                </div>
+            """)
+
+            # Send to the specific column and use unsafe_allow_html
+            if i < len(card_cols):
+                card_cols[i].markdown(html, unsafe_allow_html=True)
+
+        st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+
+        # --------------------------------------------------
+        # MATCH SELECTOR
+        # --------------------------------------------------
+        selected_match = st.selectbox(
+            "Select Match for Detailed Forecast",
+            list(all_match_forecasts.keys())
+        )
+
+        selected_df = all_match_forecasts[selected_match]
+
+        # --------------------------------------------------
+        # TOP CARD
+        # --------------------------------------------------
+        top_owner = selected_df.iloc[0]
+
+        st.markdown(f"""
+        <div class="forecast-top-card">
+            🔥 <b>{top_owner['Owner']}</b>
+            projected to dominate
+            <b>{selected_match}</b>
+            with
+            <b>{top_owner['Predicted Points']} pts</b>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # --------------------------------------------------
+        # BAR CHART
+        # --------------------------------------------------
+        fig_forecast = px.bar(
+            selected_df,
+            x="Owner",
+            y="Predicted Points",
+            color="Predicted Points",
+            text_auto=True
+        )
+
+        fig_forecast.update_layout(
+            template="plotly_dark",
+            height=420,
+            xaxis_title=None,
+            yaxis_title="Projected Match Points",
+            coloraxis_showscale=False
+        )
+
+        st.plotly_chart(
+            fig_forecast,
+            use_container_width=True
+        )
+
+    else:
+        st.info("No upcoming matches remaining.")
+
+    st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+
     # ==================================================
     # 🧠 CAPTAIN STRATEGY (FINAL CLEAN VERSION)
     # ==================================================
@@ -562,9 +797,9 @@ with tab1:
         rows.append({
             "Owner": owner,
             "Captain": captain_history,
-            "Cap Points": get_c_vc_points(owner, "captain"),
+            "Cap Points": get_c_vc_points(df,cap_df,owner,selected_day,role="captain"),
             "Vice Captain": vc_history,
-            "VC Points": get_c_vc_points(owner, "vc"),
+            "VC Points": get_c_vc_points(df,cap_df,owner,selected_day,role="vice_captain"),
             "Changes": total_changes
         })
 

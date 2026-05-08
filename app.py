@@ -751,6 +751,176 @@ with tab1:
 
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
+    # --------------------------------------------------
+    # FINAL TOURNAMENT FORECAST
+    # --------------------------------------------------
+
+    st.markdown("## 🏆 Final Tournament Forecast")
+
+    future_matches_all = matches_df[
+        matches_df["Day"] >= selected_day
+    ].copy()
+
+    forecast_rows = []
+
+    for owner, group in df.groupby("owner_name"):
+
+        # ----------------------------------------
+        # CURRENT POINTS
+        # ----------------------------------------
+        current_points = team_df.loc[
+            team_df["Owner"] == owner,
+            "Points"
+        ].values[0]
+
+        future_projection = 0
+
+        # ----------------------------------------
+        # SIMULATE EACH FUTURE MATCH
+        # ----------------------------------------
+        for _, match in future_matches_all.iterrows():
+
+            teams = [
+                t.strip()
+                for t in match["Teams"].split(",")
+            ]
+
+            owner_players = group[
+                group["franchise"].isin(teams)
+            ].copy()
+
+            captain, vice_captain = get_current_c_vc(
+                cap_df,
+                owner,
+                match["Day"]
+            )
+
+            match_projection = 0
+
+            for _, r in owner_players.iterrows():
+
+                player = r["player_name"]
+
+                scores = []
+
+                for d in range(1, selected_day + 1):
+
+                    pts = pd.to_numeric(
+                        r.get(f"day{d}", 0),
+                        errors="coerce"
+                    )
+
+                    pts = 0 if pd.isna(pts) else pts
+
+                    # ----------------------------------------
+                    # APPLY C / VC
+                    # ----------------------------------------
+                    if player == captain:
+                        pts *= 2
+
+                    elif player == vice_captain:
+                        pts *= 1.5
+
+                    if pts != 0:
+                        scores.append(pts)
+
+                avg_points = (
+                    sum(scores) / len(scores)
+                    if scores else 0
+                )
+
+                match_projection += avg_points
+
+            future_projection += match_projection
+
+        predicted_final = (
+            current_points +
+            future_projection
+        )
+
+        forecast_rows.append({
+            "Owner": owner,
+            "Current": round(current_points, 1),
+            "Projected Gain": round(future_projection, 1),
+            "Predicted Final": round(predicted_final, 1)
+        })
+
+    # --------------------------------------------------
+    # FINAL DF
+    # --------------------------------------------------
+
+    forecast_df = pd.DataFrame(forecast_rows)
+
+    forecast_df = forecast_df.sort_values(
+        "Predicted Final",
+        ascending=False
+    ).reset_index(drop=True)
+
+    forecast_df.index += 1
+
+    # --------------------------------------------------
+    # SESSION FORECAST CACHE
+    # --------------------------------------------------
+
+    if "previous_final_forecast" not in st.session_state:
+        st.session_state["previous_final_forecast"] = {}
+
+    previous_forecast = st.session_state["previous_final_forecast"]
+
+    # --------------------------------------------------
+    # FORECAST CARDS GRID
+    # --------------------------------------------------
+
+    forecast_list = forecast_df.to_dict("records")
+
+    for row_start in range(0, len(forecast_list), 5):
+
+        row_cards = forecast_list[row_start:row_start + 5]
+
+        cols = st.columns(5)
+
+        for i, row in enumerate(row_cards):
+
+            owner = row["Owner"]
+
+            current = row["Predicted Final"]
+
+            old = previous_forecast.get(owner, current)
+
+            delta = round(current - old, 1)
+
+            trend = "➖"
+            trend_class = "same"
+
+            if delta > 0:
+                trend = "🔼"
+                trend_class = "up"
+
+            elif delta < 0:
+                trend = "🔽"
+                trend_class = "down"
+
+            html = textwrap.dedent(f"""
+            <div class="final-forecast-card">
+                <div class="forecast-rank">#{row_start + i + 1}</div>
+                <div class="forecast-owner">{owner}</div>
+                <div class="forecast-final-score">{current:,.0f}</div>
+                <div class="forecast-trend">{trend}</div>
+            </div>""")
+
+            cols[i].markdown(html,unsafe_allow_html=True)
+
+    # --------------------------------------------------
+    # UPDATE CACHE
+    # --------------------------------------------------
+
+    st.session_state["previous_final_forecast"] = {
+        r["Owner"]: r["Predicted Final"]
+        for _, r in forecast_df.iterrows()
+    }
+
+    st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+
     # ==================================================
     # 🧠 CAPTAIN STRATEGY (FINAL CLEAN VERSION)
     # ==================================================

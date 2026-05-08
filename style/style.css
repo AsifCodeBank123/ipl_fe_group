@@ -464,3 +464,49 @@ tbody tr:hover {
         color: #0f172a;
     }
 }
+
+/* FINAL FORECAST */
+.final-forecast-card {
+    background: #111827;
+    border-radius: 14px;
+    padding: 18px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.08);
+    margin-bottom: 12px;
+}
+
+/* RANK */
+.forecast-rank {
+    font-size: 15px;
+    color: #94a3b8;
+}
+
+/* OWNER */
+.forecast-owner {
+    font-size: 18px;
+    font-weight: 700;
+    color: #38bdf8;
+    margin-top: 10px;
+}
+
+/* SCORE */
+.forecast-final-score {
+    font-size: 30px;
+    font-weight: 800;
+    margin-top: 14px;
+    color: white;
+}
+
+/* TREND */
+.forecast-trend {
+    margin-top: 12px;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.forecast-trend {
+    margin-top: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #38bdf8;
+}

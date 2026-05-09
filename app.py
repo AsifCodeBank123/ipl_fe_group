@@ -867,6 +867,27 @@ with tab1:
 
     previous_forecast = st.session_state["previous_final_forecast"]
 
+    if "forecast_day" not in st.session_state:
+        st.session_state["forecast_day"] = selected_day
+
+    if "previous_final_forecast" not in st.session_state:
+        st.session_state["previous_final_forecast"] = {}
+
+    previous_forecast = st.session_state["previous_final_forecast"]
+
+    # --------------------------------------------------
+    # UPDATE CACHE
+    # --------------------------------------------------
+
+    if st.session_state["forecast_day"] != selected_day:
+
+        st.session_state["previous_final_forecast"] = {
+            r["Owner"]: r["Predicted Final"]
+            for _, r in forecast_df.iterrows()
+        }
+
+        st.session_state["forecast_day"] = selected_day
+
     # --------------------------------------------------
     # FORECAST CARDS GRID
     # --------------------------------------------------
@@ -885,9 +906,9 @@ with tab1:
 
             current = row["Predicted Final"]
 
-            old = previous_forecast.get(owner, current)
+            old = previous_forecast.get(owner)
 
-            delta = round(current - old, 1)
+            delta = 0 if old is None else round(current - old, 1)
 
             trend = "➖"
             trend_class = "same"
@@ -905,19 +926,10 @@ with tab1:
                 <div class="forecast-rank">#{row_start + i + 1}</div>
                 <div class="forecast-owner">{owner}</div>
                 <div class="forecast-final-score">{current:,.0f}</div>
-                <div class="forecast-trend">{trend}</div>
+                <div class="forecast-trend"style="color:{'#22c55e' if delta > 0 else '#ef4444' if delta < 0 else '#94a3b8'};">{trend} {abs(delta):,.0f}</div>
             </div>""")
 
             cols[i].markdown(html,unsafe_allow_html=True)
-
-    # --------------------------------------------------
-    # UPDATE CACHE
-    # --------------------------------------------------
-
-    st.session_state["previous_final_forecast"] = {
-        r["Owner"]: r["Predicted Final"]
-        for _, r in forecast_df.iterrows()
-    }
 
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 

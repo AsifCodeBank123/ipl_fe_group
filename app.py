@@ -545,18 +545,49 @@ with tab1:
 
     if not future_matches.empty:
 
+        # --------------------------------------------------
+        # FORMAT MATCH LABEL
+        # --------------------------------------------------
+        def format_match_label(day, teams_str):
+
+            teams = [
+                t.strip()
+                for t in teams_str.split(",")
+            ]
+
+            # DOUBLE HEADER
+            if len(teams) == 4:
+
+                return (
+                    f"Day {day} - "
+                    f"{teams[0]} vs {teams[1]} | "
+                    f"{teams[2]} vs {teams[3]}"
+                )
+
+            # NORMAL MATCH
+            elif len(teams) == 2:
+
+                return (
+                    f"Day {day} - "
+                    f"{teams[0]} vs {teams[1]}"
+                )
+
+            return f"Day {day} - {teams_str}"
+
+        # --------------------------------------------------
+        # CREATE LABELS
+        # --------------------------------------------------
         future_matches["match_label"] = future_matches.apply(
-            lambda x: (
-                f"Day {x['Day']} - "
-                f"{x['Teams'].split(',')[0].strip()} vs "
-                f"{x['Teams'].split(',')[1].strip()}"
+            lambda x: format_match_label(
+                x["Day"],
+                x["Teams"]
             ),
             axis=1
         )
+
         # --------------------------------------------------
         # BUILD FORECASTS
         # --------------------------------------------------
-
         all_match_forecasts = {}
         summary_rows = []
 

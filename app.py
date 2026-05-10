@@ -788,136 +788,131 @@ with tab1:
 
     st.markdown("## 🏆 Final Tournament Forecast")
 
-    future_matches_all = matches_df[
-        matches_df["Day"] >= selected_day
-    ].copy()
+    # --------------------------------------------------
+    # FORECAST FUNCTION
+    # --------------------------------------------------
 
-    forecast_rows = []
+    def calculate_final_forecast(sim_day):
 
-    for owner, group in df.groupby("owner_name"):
+        future_matches_all = matches_df[
+            matches_df["Day"] >= sim_day
+        ].copy()
 
-        # ----------------------------------------
-        # CURRENT POINTS
-        # ----------------------------------------
-        current_points = team_df.loc[
-            team_df["Owner"] == owner,
-            "Points"
-        ].values[0]
+        forecast_rows = []
 
-        future_projection = 0
+        for owner, group in df.groupby("owner_name"):
 
-        # ----------------------------------------
-        # SIMULATE EACH FUTURE MATCH
-        # ----------------------------------------
-        for _, match in future_matches_all.iterrows():
+            # ----------------------------------------
+            # CURRENT POINTS
+            # ----------------------------------------
+            current_points = team_df.loc[
+                team_df["Owner"] == owner,
+                "Points"
+            ].values[0]
 
-            teams = [
-                t.strip()
-                for t in match["Teams"].split(",")
-            ]
+            future_projection = 0
 
-            owner_players = group[
-                group["franchise"].isin(teams)
-            ].copy()
+            # ----------------------------------------
+            # SIMULATE FUTURE MATCHES
+            # ----------------------------------------
+            for _, match in future_matches_all.iterrows():
 
-            captain, vice_captain = get_current_c_vc(
-                cap_df,
-                owner,
-                match["Day"]
-            )
+                teams = [
+                    t.strip()
+                    for t in match["Teams"].split(",")
+                ]
 
-            match_projection = 0
+                owner_players = group[
+                    group["franchise"].isin(teams)
+                ].copy()
 
-            for _, r in owner_players.iterrows():
-
-                player = r["player_name"]
-
-                scores = []
-
-                for d in range(1, selected_day + 1):
-
-                    pts = pd.to_numeric(
-                        r.get(f"day{d}", 0),
-                        errors="coerce"
-                    )
-
-                    pts = 0 if pd.isna(pts) else pts
-
-                    # ----------------------------------------
-                    # APPLY C / VC
-                    # ----------------------------------------
-                    if player == captain:
-                        pts *= 2
-
-                    elif player == vice_captain:
-                        pts *= 1.5
-
-                    if pts != 0:
-                        scores.append(pts)
-
-                avg_points = (
-                    sum(scores) / len(scores)
-                    if scores else 0
+                captain, vice_captain = get_current_c_vc(
+                    cap_df,
+                    owner,
+                    match["Day"]
                 )
 
-                match_projection += avg_points
+                match_projection = 0
 
-            future_projection += match_projection
+                for _, r in owner_players.iterrows():
 
-        predicted_final = (
-            current_points +
-            future_projection
+                    player = r["player_name"]
+
+                    scores = []
+
+                    for d in range(1, sim_day + 1):
+
+                        pts = pd.to_numeric(
+                            r.get(f"day{d}", 0),
+                            errors="coerce"
+                        )
+
+                        pts = 0 if pd.isna(pts) else pts
+
+                        # ----------------------------------------
+                        # APPLY C / VC
+                        # ----------------------------------------
+                        if player == captain:
+                            pts *= 2
+
+                        elif player == vice_captain:
+                            pts *= 1.5
+
+                        if pts != 0:
+                            scores.append(pts)
+
+                    avg_points = (
+                        sum(scores) / len(scores)
+                        if scores else 0
+                    )
+
+                    match_projection += avg_points
+
+                future_projection += match_projection
+
+            predicted_final = (
+                current_points +
+                future_projection
+            )
+
+            forecast_rows.append({
+                "Owner": owner,
+                "Predicted Final": round(predicted_final, 1)
+            })
+
+        forecast_df = pd.DataFrame(forecast_rows)
+
+        forecast_df = forecast_df.sort_values(
+            "Predicted Final",
+            ascending=False
+        ).reset_index(drop=True)
+
+        return forecast_df
+
+
+    # --------------------------------------------------
+    # CURRENT FORECAST
+    # --------------------------------------------------
+
+    forecast_df = calculate_final_forecast(
+        selected_day
+    )
+
+    # --------------------------------------------------
+    # PREVIOUS FORECAST
+    # --------------------------------------------------
+
+    previous_df = calculate_final_forecast(
+        max(selected_day - 1, 1)
+    )
+    
+
+    previous_map = dict(
+        zip(
+            previous_df["Owner"],
+            previous_df["Predicted Final"]
         )
-
-        forecast_rows.append({
-            "Owner": owner,
-            "Current": round(current_points, 1),
-            "Projected Gain": round(future_projection, 1),
-            "Predicted Final": round(predicted_final, 1)
-        })
-
-    # --------------------------------------------------
-    # FINAL DF
-    # --------------------------------------------------
-
-    forecast_df = pd.DataFrame(forecast_rows)
-
-    forecast_df = forecast_df.sort_values(
-        "Predicted Final",
-        ascending=False
-    ).reset_index(drop=True)
-
-    forecast_df.index += 1
-
-    # --------------------------------------------------
-    # SESSION FORECAST CACHE
-    # --------------------------------------------------
-
-    if "previous_final_forecast" not in st.session_state:
-        st.session_state["previous_final_forecast"] = {}
-
-    previous_forecast = st.session_state["previous_final_forecast"]
-
-    if "forecast_day" not in st.session_state:
-        st.session_state["forecast_day"] = selected_day
-
-    if "previous_final_forecast" not in st.session_state:
-        st.session_state["previous_final_forecast"] = {}
-
-    previous_forecast = st.session_state["previous_final_forecast"]
-
-    # --------------------------------------------------
-    # UPDATE CACHE
-    # --------------------------------------------------
-
-    if st.session_state["forecast_day"] != selected_day:
-
-        st.session_state["previous_final_forecast"] = {
-            r["Owner"]: r["Predicted Final"]
-            for _, r in forecast_df.iterrows()
-        }
-
-        st.session_state["forecast_day"] = selected_day
+    )
 
     # --------------------------------------------------
     # FORECAST CARDS GRID
@@ -937,20 +932,18 @@ with tab1:
 
             current = row["Predicted Final"]
 
-            old = previous_forecast.get(owner)
+            old = previous_map.get(owner, current)
 
-            delta = 0 if old is None else round(current - old, 1)
+            delta = round(current - old, 1)
 
             trend = "➖"
-            trend_class = "same"
 
             if delta > 0:
                 trend = "🔼"
-                trend_class = "up"
 
             elif delta < 0:
                 trend = "🔽"
-                trend_class = "down"
+
 
             html = textwrap.dedent(f"""
             <div class="final-forecast-card">
@@ -961,6 +954,7 @@ with tab1:
             </div>""")
 
             cols[i].markdown(html,unsafe_allow_html=True)
+            
 
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 

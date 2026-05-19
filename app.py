@@ -254,13 +254,29 @@ st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 # PROGRESS BAR
 # ----------------------------------------
 
-matches_completed = max(selected_day - 1, 0)
+completed_df = matches_df[
+    matches_df["Day"] < selected_day
+].copy()
+
+matches_completed = completed_df["Teams"].apply(
+    lambda x: len(str(x).split(",")) // 2
+).sum()
+
 progress = matches_completed / TOTAL_MATCHES
+
 percent = int(progress * 100)
 
 st.markdown(f"""
-<div style="font-size:0.9rem;color:#94a3b8;margin-bottom:4px;margin-top:10px">
-📊 Season Progress: <b>{matches_completed}</b> / {TOTAL_MATCHES} matches ({percent}%)
+<div style="
+    font-size:0.9rem;
+    color:#94a3b8;
+    margin-bottom:4px;
+    margin-top:10px">
+
+📊 Season Progress:
+<b>{matches_completed}</b> / {TOTAL_MATCHES}
+matches ({percent}%)
+
 </div>
 """, unsafe_allow_html=True)
 
